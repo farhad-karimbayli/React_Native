@@ -1,113 +1,167 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import Counter from "./components/Counter";
-import HiddenText from "./components/HiddenText";
-import LikeCounter from "./components/LikeCounter";
+import { useState } from "react";
+import {
+    SafeAreaView,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
+
 import ProfileCard from "./components/ProfileCard";
-import SelectedProfileCard from "./components/SelectedProfileCard";
 
 export default function App() {
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.container}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Home work</Text>
-        <Text style={styles.subtitle}>useState, onPress and Flexbox</Text>
-      </View>
+    const names = [
+        { id: "1", name: "Farhad" },
+        { id: "2", name: "Ali" },
+        { id: "3", name: "Nigar" },
+        { id: "4", name: "Murad" },
+        { id: "5", name: "Aysel" },
+    ];
 
-      <View style={styles.grid}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Like button</Text>
-          <View style={styles.likeBox}>
-            <LikeCounter />
-          </View>
-        </View>
+    const profiles = [
+        {
+            id: "1",
+            name: "Farhad",
+            age: 20,
+            city: "Baku",
+            profession: "Backend Developer",
+        },
+        {
+            id: "2",
+            name: "Ali",
+            age: 21,
+            city: "Ganja",
+            profession: "Backend Developer",
+        },
+        {
+            id: "3",
+            name: "Aysel",
+            age: 19,
+            city: "Baku",
+            profession: "UI/UX Designer",
+        },
+        {
+            id: "4",
+            name: "Murad",
+            age: 22,
+            city: "Baku",
+            profession: "Mobile Developer",
+        },
+        {
+            id: "5",
+            name: "Rustam",
+            age: 20,
+            city: "Ganja",
+            profession: "QA Engineer",
+        },
+    ];
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Show / hide text</Text>
-          <View style={styles.hiddenTextBox}>
-            <HiddenText text="This text can be hidden and then showed again" />
-          </View>
-        </View>
-      </View>
+    const [selectedId, setSelectedId] = useState(null);
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>3. ProfileCard and choosing card</Text>
-        <View style={styles.cards}>
-          <ProfileCard name="Farhad" city="Baku" language="C#" />
-          <SelectedProfileCard
-            name="Aysel"
-            role="React Native student"
-            avatar="https://i.pravatar.cc/200?img=47"
-          />
-        </View>
-      </View>
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text style={styles.mainTitle}>Homework FlatList</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Counter </Text>
-        <View style={styles.counterBox}>
-          <Counter />
-        </View>
-      </View>
-    </ScrollView>
-  );
+            <Text style={styles.sectionTitle}>1. List of Names</Text>
+
+            <FlatList
+                data={names}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => {
+                    console.log("Name item:", item);
+
+                    return (
+                        <View style={styles.nameItem}>
+                            <Text style={styles.nameText}>{item.name}</Text>
+                        </View>
+                    );
+                }}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ListHeaderComponent={
+                    <Text style={styles.listHeader}>Names:</Text>
+                }
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No names found</Text>
+                }
+            />
+
+            <Text style={styles.sectionTitle}>2. Profile Cards</Text>
+
+            <FlatList
+                data={profiles}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => {
+                    console.log("Profile item:", item);
+
+                    return (
+                        <ProfileCard
+                            profile={item}
+                            selected={selectedId === item.id}
+                            onPress={() => setSelectedId(item.id)}
+                        />
+                    );
+                }}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ListHeaderComponent={
+                    <Text style={styles.listHeader}>Profiles:</Text>
+                }
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No profiles found</Text>
+                }
+            />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  container: {
-    padding: 20,
-    gap: 16,
-  },
-  header: {
-    gap: 6,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "700",
-    color: "#1f2937",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#4b5563",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
-  },
-  section: {
-    flexGrow: 1,
-    flexBasis: 300,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  likeBox: {
-    height: 70,
-  },
-  hiddenTextBox: {
-    height: 90,
-  },
-  cards: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-  },
-  counterBox: {
-    height: 180,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+        paddingTop: 40,
+    },
+
+    mainTitle: {
+        fontSize: 28,
+        fontWeight: "bold",
+        textAlign: "center",
+        marginBottom: 20,
+    },
+
+    sectionTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        marginLeft: 16,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+
+    listHeader: {
+        fontSize: 18,
+        fontWeight: "600",
+        marginHorizontal: 16,
+        marginBottom: 8,
+        color: "#333",
+    },
+
+    nameItem: {
+        backgroundColor: "#ffffff",
+        padding: 16,
+        marginHorizontal: 16,
+        borderRadius: 10,
+    },
+
+    nameText: {
+        fontSize: 18,
+    },
+
+    separator: {
+        height: 8,
+    },
+
+    emptyText: {
+        textAlign: "center",
+        fontSize: 16,
+        color: "gray",
+        marginTop: 20,
+    },
 });
