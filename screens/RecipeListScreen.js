@@ -19,7 +19,7 @@ import {
 } from "../data/api";
 import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PressableCard from "../components/PressableCard";
 import { useRecipeData } from "../context/RecipeDataContext";
 import { getRecipeColumns } from "../utils/cardLayout";
@@ -42,10 +42,17 @@ const RecipeListScreen = () => {
   const [error, setError] = useState(null);
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
+  const searchLoaded = useRef(false);
+
   const [activeLetter, setActiveLetter] = useState(null);
   const [activeArea, setActiveArea] = useState(null);
   const { width, height } = useWindowDimensions();
-  const { cardSize } = useRecipeData();
+  const {
+    cardSize,
+    lastSearchQuery,
+    loaded: recipeDataLoaded,
+    setLastSearchQuery,
+  } = useRecipeData();
   const numColumns = getRecipeColumns(cardSize, width, height);
 
   const localRecipes = RECIPES.filter((item) =>
@@ -102,6 +109,14 @@ const RecipeListScreen = () => {
   }, []);
 
   useEffect(() => {
+    if (recipeDataLoaded && !searchLoaded.current) {
+      searchLoaded.current = true;
+      setQuery(lastSearchQuery);
+    }
+  }, [lastSearchQuery, recipeDataLoaded]);
+
+
+  useEffect(() => {
     if (activeLetter || activeArea) {
       return;
     }
@@ -115,6 +130,7 @@ const RecipeListScreen = () => {
 
   const selectLetter = (letter) => {
     setQuery("");
+    setLastSearchQuery("");
     setActiveArea(null);
     setActiveLetter(letter);
     getMeals({ type: "letter", value: letter.toLowerCase() });
@@ -122,6 +138,7 @@ const RecipeListScreen = () => {
 
   const selectArea = (area) => {
     setQuery("");
+    setLastSearchQuery("");
     setActiveLetter(null);
     setActiveArea(area);
     getMeals({ type: "area", value: area });
@@ -129,6 +146,7 @@ const RecipeListScreen = () => {
 
   const clearFilters = () => {
     setQuery("");
+    setLastSearchQuery("");
     setActiveLetter(null);
     setActiveArea(null);
     getMeals({ type: "search", value: "" });
@@ -137,11 +155,19 @@ const RecipeListScreen = () => {
   return (
     <View style={styles.screen}>
       <TextInput
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        clearButtonMode="while-editing"
+        importantForAutofill="no"
+        returnKeyType="search"
+        textContentType="none"
         value={query}
         onChangeText={(text) => {
           setActiveLetter(null);
           setActiveArea(null);
           setQuery(text);
+          setLastSearchQuery(text);
         }}
         placeholder="Поиск рецепта..."
         placeholderTextColor={"#94a3b8"}
@@ -193,9 +219,9 @@ const RecipeListScreen = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
       >
-        {areas.map((area) => (
+        {areas.map((area, index) => (
           <Pressable
-            key={area}
+            key={`${area}-${index}`}
             onPress={() => selectArea(area)}
             style={[styles.areaChip, activeArea === area && styles.activeChip]}
           >

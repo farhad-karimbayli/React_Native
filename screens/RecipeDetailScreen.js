@@ -129,6 +129,7 @@ const RecipeDetailsScreen = () => {
       if (ing && ing.trim()) {
         const name = ing.trim();
         ingredients.push({
+          id: `${name}-${i}`,
           name,
           measure: mea?.trim() || "",
           image: getIngredientImage(name),
@@ -170,7 +171,7 @@ const RecipeDetailsScreen = () => {
             <FlatList
               horizontal
               data={ingredients}
-              keyExtractor={(item) => item.name}
+              keyExtractor={(item) => item.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.ingredientsList}
               renderItem={({ item }) => <IngredientCard ingredient={item} />}

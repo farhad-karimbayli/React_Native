@@ -8,12 +8,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { RECIPES } from "../data/recipes";
 import { getMealsByCategory } from "../data/api";
 import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import PressableCard from "../components/PressableCard";
 import { useRoute } from "@react-navigation/native";
 import { useEffect } from "react";
@@ -57,9 +57,22 @@ const RecipeListByCategory = () => {
     loadRecipes();
   }, [recipeCategory]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setQuery("");
+    }, []),
+  );
+
   return (
     <View style={styles.screen}>
       <TextInput
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        clearButtonMode="while-editing"
+        importantForAutofill="no"
+        returnKeyType="search"
+        textContentType="none"
         value={query}
         onChangeText={setQuery}
         placeholder="Поиск в категории..."

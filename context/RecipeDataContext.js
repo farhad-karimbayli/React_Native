@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   history: "recipeHistory",
   favoriteCategory: "favoriteCategory",
   cardSize: "cardSize",
+  lastSearchQuery: "lastSearchQuery",
 };
 
 const HISTORY_LIMIT = 20;
@@ -29,6 +30,7 @@ const RecipeDataProvider = ({ children }) => {
   const [history, setHistory] = useState([]);
   const [favoriteCategory, setFavoriteCategory] = useState(null);
   const [cardSize, setCardSize] = useState("large");
+  const [lastSearchQuery, setLastSearchQueryState] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -40,12 +42,14 @@ const RecipeDataProvider = ({ children }) => {
         storedHistory,
         storedFavoriteCategory,
         storedCardSize,
+        storedLastSearchQuery,
       ] = await Promise.all([
         load(STORAGE_KEYS.notes, {}),
         load(STORAGE_KEYS.views, {}),
         load(STORAGE_KEYS.history, []),
         load(STORAGE_KEYS.favoriteCategory, null),
         load(STORAGE_KEYS.cardSize, "large"),
+        load(STORAGE_KEYS.lastSearchQuery, ""),
       ]);
 
       if (!mounted) {
@@ -67,6 +71,9 @@ const RecipeDataProvider = ({ children }) => {
         typeof storedFavoriteCategory === "string" ? storedFavoriteCategory : null,
       );
       setCardSize(normalizeCardSize(storedCardSize));
+      setLastSearchQueryState(
+        typeof storedLastSearchQuery === "string" ? storedLastSearchQuery : "",
+      );
       setLoaded(true);
     };
 
@@ -107,6 +114,12 @@ const RecipeDataProvider = ({ children }) => {
     }
   }, [cardSize, loaded]);
 
+  useEffect(() => {
+    if (loaded) {
+      save(STORAGE_KEYS.lastSearchQuery, lastSearchQuery);
+    }
+  }, [lastSearchQuery, loaded]);
+
   const setNote = useCallback((recipeId, note) => {
     setNotes((prev) => ({
       ...prev,
@@ -143,6 +156,10 @@ const RecipeDataProvider = ({ children }) => {
     setCardSize(normalizeCardSize(size));
   }, []);
 
+  const setLastSearchQuery = useCallback((query) => {
+    setLastSearchQueryState(query);
+  }, []);
+
   return (
     <RecipeDataContext.Provider
       value={{
@@ -151,10 +168,12 @@ const RecipeDataProvider = ({ children }) => {
         favoriteCategory,
         history,
         loaded,
+        lastSearchQuery,
         notes,
         recordRecipeView,
         rememberCategory,
         setCardSizePreference,
+        setLastSearchQuery,
         setNote,
         views,
       }}

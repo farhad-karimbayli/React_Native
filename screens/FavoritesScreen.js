@@ -7,10 +7,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PressableCard from "../components/PressableCard";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecipeData } from "../context/RecipeDataContext";
@@ -62,9 +62,22 @@ const FavoritesScreen = () => {
     loadFavorites();
   }, [favorites]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setQuery("");
+    }, []),
+  );
+
   return (
     <View style={styles.screen}>
       <TextInput
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        clearButtonMode="while-editing"
+        importantForAutofill="no"
+        returnKeyType="search"
+        textContentType="none"
         value={query}
         onChangeText={setQuery}
         placeholder="Поиск в избранном..."
