@@ -19,7 +19,6 @@ const fetchMealDb = async (path) => {
       return response.json();
     } catch (error) {
       lastError = error;
-      console.warn("MealDB request failed", url, error?.message || error);
     }
   }
 

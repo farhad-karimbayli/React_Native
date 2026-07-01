@@ -10,7 +10,7 @@ const AboutAppScreen = () => {
       </Text>
       <Pressable
         onPress={() =>
-          Linking.openURL("https://github.com/aviator2110/recipes")
+          Linking.openURL("hhttps://github.com/farhad-karimbayli/React_Native/")
         }
       >
         <Image

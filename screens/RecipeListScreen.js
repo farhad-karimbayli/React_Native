@@ -17,9 +17,12 @@ import {
   getMealsByFirstLetter,
   getMealsBySearch,
 } from "../data/api";
+import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
 import { useEffect, useState } from "react";
 import PressableCard from "../components/PressableCard";
+import { useRecipeData } from "../context/RecipeDataContext";
+import { getRecipeColumns } from "../utils/cardLayout";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const FALLBACK_AREAS = [
@@ -42,7 +45,8 @@ const RecipeListScreen = () => {
   const [activeLetter, setActiveLetter] = useState(null);
   const [activeArea, setActiveArea] = useState(null);
   const { width, height } = useWindowDimensions();
-  const numColumns = width > height ? 3 : 2;
+  const { cardSize } = useRecipeData();
+  const numColumns = getRecipeColumns(cardSize, width, height);
 
   const localRecipes = RECIPES.filter((item) =>
     item.name.toLowerCase().includes(query.toLowerCase()),
@@ -79,7 +83,7 @@ const RecipeListScreen = () => {
       setRecipes(await getMealsBySearch(value));
     } catch (err) {
       setRecipes(getLocalRecipes(type, value));
-      setError("Нет сети, показываем локальные рецепты");
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -143,6 +147,7 @@ const RecipeListScreen = () => {
         placeholderTextColor={"#94a3b8"}
         style={styles.search}
       />
+      <CardSizeToggle />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -206,8 +211,8 @@ const RecipeListScreen = () => {
         ))}
       </ScrollView>
       {error ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineText}>{error}</Text>
           <Pressable
             style={styles.retryButton}
             onPress={() => {
@@ -247,7 +252,7 @@ const RecipeListScreen = () => {
               }}
               style={{ flex: 1 / numColumns, padding: 7 }}
             >
-              <RecipeCard recipe={item} />
+              <RecipeCard recipe={item} size={cardSize} />
             </PressableCard>
           )}
           ListEmptyComponent={
@@ -320,7 +325,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  errorBanner: {
+  offlineBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -328,14 +333,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     marginBottom: 8,
     borderRadius: 10,
-    backgroundColor: "#fee2e2",
+    backgroundColor: "#e0f2fe",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  errorText: {
+  offlineText: {
     flex: 1,
-    color: "#991b1b",
+    color: "#075985",
     fontSize: 13,
+    fontWeight: "700",
   },
   retryButton: {
     borderRadius: 8,

@@ -1,14 +1,33 @@
+import { useState } from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useFavorites } from "../../context/FavoritesContext";
+import { useRecipeData } from "../../context/RecipeDataContext";
 
-const RecipeCard = ({ recipe }) => {
+const RecipeCard = ({ recipe, size = "large" }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { views } = useRecipeData();
+  const [imageFailed, setImageFailed] = useState(false);
   const favorite = isFavorite(recipe.id);
+  const viewCount = Number(views[recipe.id]) || 0;
+  const isSmall = size === "small";
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: recipe.thumb }} style={styles.image} />
+      {recipe.thumb && !imageFailed ? (
+        <Image
+          onError={() => setImageFailed(true)}
+          source={{ uri: recipe.thumb }}
+          style={styles.image}
+        />
+      ) : (
+        <View style={styles.imageFallback}>
+          <Text style={styles.imageFallbackTitle} numberOfLines={1}>
+            {recipe.name}
+          </Text>
+          <Text style={styles.imageFallbackText}>Нет фото</Text>
+        </View>
+      )}
       <Pressable
         hitSlop={10}
         onPress={(event) => {
@@ -19,11 +38,16 @@ const RecipeCard = ({ recipe }) => {
       >
         <Text style={styles.favoriteIcon}>{favorite ? "❤️" : "🤍"}</Text>
       </Pressable>
-      <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>
+      <View style={[styles.info, isSmall && styles.smallInfo]}>
+        <Text style={[styles.title, isSmall && styles.smallTitle]} numberOfLines={1}>
           {recipe.name}
         </Text>
-        <Text style={styles.category}>{recipe.category}</Text>
+        <Text style={[styles.category, isSmall && styles.smallMeta]} numberOfLines={1}>
+          {recipe.category}
+        </Text>
+        <Text style={[styles.views, isSmall && styles.smallMeta]}>
+          Просмотров: {viewCount}
+        </Text>
         <Text style={styles.area}>{recipe.area ?? "Unknown"}</Text>
       </View>
     </View>
@@ -49,6 +73,26 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 1,
   },
+  imageFallback: {
+    width: "100%",
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#e0f2fe",
+    padding: 12,
+  },
+  imageFallbackTitle: {
+    color: "#075985",
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  imageFallbackText: {
+    color: "#1e6f8e",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 6,
+  },
   favoriteButton: {
     position: "absolute",
     top: 8,
@@ -66,6 +110,9 @@ const styles = StyleSheet.create({
   info: {
     padding: 10,
   },
+  smallInfo: {
+    padding: 8,
+  },
   area: {
     position: "absolute",
     top: 8,
@@ -80,7 +127,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   title: { fontSize: 15, fontWeight: "bold", color: "#1e293b" },
+  smallTitle: { fontSize: 13 },
   category: { fontSize: 12, color: "#64748b", marginTop: 2 },
+  views: { fontSize: 11, color: "#1e6f8e", marginTop: 3, fontWeight: "700" },
+  smallMeta: { fontSize: 10 },
 });
 
 export default RecipeCard;

@@ -8,10 +8,11 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 
 import PressableCard from "../components/PressableCard";
+import { useRecipeData } from "../context/RecipeDataContext";
 import { getCategories } from "../data/api";
 import { RECIPES } from "../data/recipes";
 
@@ -35,6 +36,8 @@ const CategoryRecipesScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { width, height } = useWindowDimensions();
+  const { favoriteCategory, rememberCategory } = useRecipeData();
+  const openedDefaultCategory = useRef(false);
   const numColumns = width > height ? 3 : 2;
 
   const loadCategories = async () => {
@@ -44,7 +47,7 @@ const CategoryRecipesScreen = () => {
       setCategories(await getCategories());
     } catch (err) {
       setCategories(localCategories);
-      setError("Нет сети, показываем локальные категории");
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -53,6 +56,17 @@ const CategoryRecipesScreen = () => {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (openedDefaultCategory.current || !favoriteCategory) {
+      return;
+    }
+
+    openedDefaultCategory.current = true;
+    navigation.navigate("RecipeListByCategory", {
+      recipeCategory: favoriteCategory,
+    });
+  }, [favoriteCategory, navigation]);
 
   if (loading) {
     return (
@@ -74,6 +88,7 @@ const CategoryRecipesScreen = () => {
         renderItem={({ item }) => (
           <PressableCard
             onPress={() => {
+              rememberCategory(item.strCategory);
               navigation.navigate("RecipeListByCategory", {
                 recipeCategory: item.strCategory,
               });
@@ -143,10 +158,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   errorText: {
-    color: "#991b1b",
+    color: "#075985",
     marginHorizontal: 12,
     marginBottom: 4,
     fontSize: 13,
+    fontWeight: "700",
   },
 });
 

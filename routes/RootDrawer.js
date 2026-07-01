@@ -3,6 +3,7 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import Tabs from "./Tabs";
 import AboutAppScreen from "../screens/AboutAppScreen";
 import CategoryRecipesStack from "./CategoryRecipesStack";
+import HistoryStack from "./HistoryStack";
 
 const Drawer = createDrawerNavigator();
 
@@ -13,6 +14,7 @@ const RootDrawer = () => {
         headerStyle: { backgroundColor: "#20232A" },
         headerTintColor: "#61DAFB",
         headerTitleStyle: { fontWeight: "bold" },
+        overlayColor: "transparent",
       }}
     >
       <Drawer.Screen
@@ -24,6 +26,11 @@ const RootDrawer = () => {
         name="Categories"
         component={CategoryRecipesStack}
         options={{ title: "Категории" }}
+      />
+      <Drawer.Screen
+        name="History"
+        component={HistoryStack}
+        options={{ title: "История" }}
       />
       <Drawer.Screen
         name="About"

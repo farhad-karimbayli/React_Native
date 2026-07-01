@@ -9,17 +9,53 @@ import {
   Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
+import { useRef } from "react";
 import PressableCard from "../components/PressableCard";
 import RecipeCard from "../components/RecipeCard";
+import { useRecipeData } from "../context/RecipeDataContext";
 import { getMealDetailsById, getMealsByCategory } from "../data/api";
+
+const getIngredientImage = (name) =>
+  `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name)}-Small.png`;
+
+const IngredientCard = ({ ingredient }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  return (
+    <View style={styles.ingredientCard}>
+      {imageFailed ? (
+        <View style={styles.ingredientImageFallback}>
+          <Text style={styles.ingredientImageFallbackText}>Нет фото</Text>
+        </View>
+      ) : (
+        <Image
+          onError={() => setImageFailed(true)}
+          source={{ uri: ingredient.image }}
+          style={styles.ingredientImage}
+        />
+      )}
+      <Text style={styles.ingredientName} numberOfLines={2}>
+        {ingredient.name}
+      </Text>
+      {ingredient.measure ? (
+        <Text style={styles.ingredientMeasure} numberOfLines={2}>
+          {ingredient.measure}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
 
 const RecipeDetailsScreen = () => {
   const { recipe } = useRoute().params;
   const navigation = useNavigation();
+  const viewedRecipeId = useRef(null);
+  const { loaded, notes, recordRecipeView, setNote } = useRecipeData();
 
   useEffect(() => {
     navigation.setOptions({ title: recipe.name });
@@ -33,7 +69,21 @@ const RecipeDetailsScreen = () => {
   const instructions = full?.strInstructions || recipe.instructions || "";
   const smallInstructions = instructions.slice(0, 240);
   const category = full?.strCategory || recipe.category;
+  const note = notes[recipe.id] || "";
   const youtubeUrl = full?.strYoutube || recipe.youtube || "";
+
+  useEffect(() => {
+    if (!loaded) {
+      return;
+    }
+
+    if (viewedRecipeId.current === recipe.id) {
+      return;
+    }
+
+    viewedRecipeId.current = recipe.id;
+    recordRecipeView(recipe);
+  }, [loaded, recipe, recipe.id, recordRecipeView]);
 
   useEffect(() => {
     const getRecipe = async () => {
@@ -77,7 +127,12 @@ const RecipeDetailsScreen = () => {
       const mea = full["strMeasure" + i];
 
       if (ing && ing.trim()) {
-        ingredients.push(`${ing}${mea && mea.trim() ? ` - ${mea}` : ""}`);
+        const name = ing.trim();
+        ingredients.push({
+          name,
+          measure: mea?.trim() || "",
+          image: getIngredientImage(name),
+        });
       }
     }
   }
@@ -112,11 +167,16 @@ const RecipeDetailsScreen = () => {
 
           <Text style={styles.section}>Ингредиенты</Text>
           {ingredients.length ? (
-            ingredients.map((text) => (
-              <Text key={text} style={styles.text}>
-                {text}
-              </Text>
-            ))
+            <FlatList
+              horizontal
+              data={ingredients}
+              keyExtractor={(item) => item.name}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.ingredientsList}
+              renderItem={({ item }) => <IngredientCard ingredient={item} />}
+            />
+          ) : full === null ? (
+            <Text style={styles.muted}>Ингредиенты недоступны офлайн.</Text>
           ) : (
             <Text style={styles.muted}>Загружаем ингредиенты...</Text>
           )}
@@ -139,6 +199,16 @@ const RecipeDetailsScreen = () => {
               </Text>
             </Pressable>
           ) : null}
+
+          <Text style={styles.section}>Личная заметка</Text>
+          <TextInput
+            value={note}
+            onChangeText={(text) => setNote(recipe.id, text)}
+            multiline
+            placeholder="Напиши заметку к этому рецепту..."
+            placeholderTextColor="#94a3b8"
+            style={styles.noteInput}
+          />
         </View>
         <View style={styles.actions}>
           <Pressable
@@ -222,7 +292,62 @@ const styles = StyleSheet.create({
   },
   text: { fontSize: 15, color: "#334155", lineHeight: 22 },
   muted: { fontSize: 15, color: "#94a3b8", lineHeight: 22 },
+  ingredientsList: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  ingredientCard: {
+    width: 118,
+    minHeight: 162,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 10,
+    backgroundColor: "#f8fafc",
+    padding: 8,
+  },
+  ingredientImage: {
+    width: "100%",
+    height: 76,
+    resizeMode: "contain",
+  },
+  ingredientImageFallback: {
+    height: 76,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    backgroundColor: "#e0f2fe",
+  },
+  ingredientImageFallbackText: {
+    color: "#1e6f8e",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  ingredientName: {
+    color: "#1e293b",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 8,
+  },
+  ingredientMeasure: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 3,
+  },
   instructions: { fontSize: 15, color: "#334155", lineHeight: 22 },
+  noteInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    color: "#1e293b",
+    fontSize: 15,
+    lineHeight: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlignVertical: "top",
+  },
   textButton: {
     alignSelf: "flex-start",
     marginTop: 8,

@@ -8,11 +8,14 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
 import { useEffect, useState } from "react";
 import PressableCard from "../components/PressableCard";
 import { useFavorites } from "../context/FavoritesContext";
+import { useRecipeData } from "../context/RecipeDataContext";
 import { getMealById } from "../data/api";
+import { getRecipeColumns } from "../utils/cardLayout";
 
 const FavoritesScreen = () => {
   const navigation = useNavigation();
@@ -21,8 +24,9 @@ const FavoritesScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { width, height } = useWindowDimensions();
-  const numColumns = width > height ? 3 : 2;
   const { favorites } = useFavorites();
+  const { cardSize } = useRecipeData();
+  const numColumns = getRecipeColumns(cardSize, width, height);
   const favoriteIds = favorites.map((item) =>
     typeof item === "string" ? item : item.id,
   );
@@ -48,7 +52,7 @@ const FavoritesScreen = () => {
       setRecipes(freshRecipes.filter(Boolean));
     } catch (err) {
       setRecipes(favorites.filter((item) => typeof item !== "string"));
-      setError("Нет сети, показываем сохранённые карточки");
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -67,6 +71,7 @@ const FavoritesScreen = () => {
         placeholderTextColor={"#94a3b8"}
         style={styles.search}
       />
+      <CardSizeToggle />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#61DAFB" />
@@ -84,7 +89,7 @@ const FavoritesScreen = () => {
               }}
               style={{ flex: 1 / numColumns, padding: 7 }}
             >
-              <RecipeCard recipe={item} />
+              <RecipeCard recipe={item} size={cardSize} />
             </PressableCard>
           )}
           ListEmptyComponent={
@@ -120,10 +125,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorText: {
-    color: "#991b1b",
+    color: "#075985",
     marginHorizontal: 12,
     marginBottom: 4,
     fontSize: 13,
+    fontWeight: "700",
   },
   empty: { textAlign: "center", color: "#64748b", marginTop: 40 },
 });

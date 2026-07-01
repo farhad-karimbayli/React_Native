@@ -11,11 +11,14 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { RECIPES } from "../data/recipes";
 import { getMealsByCategory } from "../data/api";
+import CardSizeToggle from "../components/CardSizeToggle";
 import RecipeCard from "../components/RecipeCard";
 import { useState } from "react";
 import PressableCard from "../components/PressableCard";
 import { useRoute } from "@react-navigation/native";
 import { useEffect } from "react";
+import { useRecipeData } from "../context/RecipeDataContext";
+import { getRecipeColumns } from "../utils/cardLayout";
 
 const RecipeListByCategory = () => {
   const { recipeCategory } = useRoute().params;
@@ -25,10 +28,11 @@ const RecipeListByCategory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { width, height } = useWindowDimensions();
+  const { cardSize, rememberCategory } = useRecipeData();
   useEffect(() => {
     navigation.setOptions({ title: recipeCategory });
   }, [navigation, recipeCategory]);
-  const numColumns = width > height ? 3 : 2;
+  const numColumns = getRecipeColumns(cardSize, width, height);
 
   const localRecipes = RECIPES.filter((item) => item.category === recipeCategory);
   const filtered = recipes.filter((item) =>
@@ -42,13 +46,14 @@ const RecipeListByCategory = () => {
       setRecipes(await getMealsByCategory(recipeCategory));
     } catch (err) {
       setRecipes(localRecipes);
-      setError("Нет сети, показываем локальные рецепты");
+      setError(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    rememberCategory(recipeCategory);
     loadRecipes();
   }, [recipeCategory]);
 
@@ -61,9 +66,10 @@ const RecipeListByCategory = () => {
         placeholderTextColor={"#94a3b8"}
         style={styles.search}
       />
+      <CardSizeToggle />
       {error ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineText}>{error}</Text>
           <Pressable style={styles.retryButton} onPress={loadRecipes}>
             <Text style={styles.retryText}>Повторить</Text>
           </Pressable>
@@ -85,7 +91,7 @@ const RecipeListByCategory = () => {
               }}
               style={{ flex: 1 / numColumns, padding: 7 }}
             >
-              <RecipeCard recipe={item} />
+              <RecipeCard recipe={item} size={cardSize} />
             </PressableCard>
           )}
           ListEmptyComponent={
@@ -120,7 +126,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  errorBanner: {
+  offlineBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -128,14 +134,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     marginBottom: 8,
     borderRadius: 10,
-    backgroundColor: "#fee2e2",
+    backgroundColor: "#e0f2fe",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  errorText: {
+  offlineText: {
     flex: 1,
-    color: "#991b1b",
+    color: "#075985",
     fontSize: 13,
+    fontWeight: "700",
   },
   retryButton: {
     borderRadius: 8,
