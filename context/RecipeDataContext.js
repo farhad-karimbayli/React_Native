@@ -19,7 +19,7 @@ const STORAGE_KEYS = {
   lastSearchQuery: "lastSearchQuery",
 };
 
-const HISTORY_LIMIT = 20;
+const HISTORY_LIMIT = 5;
 
 const normalizeCardSize = (value) => (value === "small" ? "small" : "large");
 
@@ -127,20 +127,21 @@ const RecipeDataProvider = ({ children }) => {
     }));
   }, []);
 
-  const recordRecipeView = useCallback((recipe) => {
+  const recordRecipeView = (recipe) => {
     const viewedAt = Date.now();
 
     setViews((prev) => ({
       ...prev,
       [recipe.id]: (Number(prev[recipe.id]) || 0) + 1,
     }));
+
     setHistory((prev) => {
       const nextItem = { ...recipe, viewedAt };
       const withoutCurrent = prev.filter((item) => item.id !== recipe.id);
 
       return [nextItem, ...withoutCurrent].slice(0, HISTORY_LIMIT);
     });
-  }, []);
+  };
 
   const clearHistory = useCallback(() => {
     setHistory([]);
