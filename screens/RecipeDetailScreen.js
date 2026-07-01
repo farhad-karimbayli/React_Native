@@ -19,6 +19,7 @@ import PressableCard from "../components/PressableCard";
 import RecipeCard from "../components/RecipeCard";
 import { useRecipeData } from "../context/RecipeDataContext";
 import { getMealDetailsById, getMealsByCategory } from "../data/api";
+import { useSQLiteContext } from "expo-sqlite";
 
 const getIngredientImage = (name) =>
   `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name)}-Small.png`;
@@ -52,10 +53,47 @@ const IngredientCard = ({ ingredient }) => {
 };
 
 const RecipeDetailsScreen = () => {
+  const db = useSQLiteContext();
+
   const { recipe } = useRoute().params;
   const navigation = useNavigation();
   const viewedRecipeId = useRef(null);
-  const { loaded, notes, recordRecipeView, setNote } = useRecipeData();
+  const { loaded, recordRecipeView } = useRecipeData();
+  const [noteText, setNoteText] = useState("");
+  const [recipeNotes, setRecipeNotes] = useState([]);
+
+  const loadNotes = async () => {
+    const rows = await db.getAllAsync(
+      "SELECT * FROM notes WHERE recipeId = ? ORDER BY createdAt DESC",
+      recipe.id,
+    );
+    setRecipeNotes(rows);
+  };
+
+  const addNote = async () => {
+    const text = noteText.trim();
+
+    if (!text) {
+      return;
+    }
+
+    await db.runAsync(
+      "INSERT INTO notes (recipeId, text) VALUES (?, ?)",
+      recipe.id,
+      text,
+    );
+    setNoteText("");
+    loadNotes();
+  };
+
+  const deleteNote = async (id) => {
+    await db.runAsync("DELETE FROM notes WHERE id = ?", id);
+    loadNotes();
+  };
+
+  useEffect(() => {
+    loadNotes();
+  }, [recipe.id]);
 
   useEffect(() => {
     navigation.setOptions({ title: recipe.name });
@@ -69,7 +107,6 @@ const RecipeDetailsScreen = () => {
   const instructions = full?.strInstructions || recipe.instructions || "";
   const smallInstructions = instructions.slice(0, 240);
   const category = full?.strCategory || recipe.category;
-  const note = notes[recipe.id] || "";
   const youtubeUrl = full?.strYoutube || recipe.youtube || "";
 
   useEffect(() => {
@@ -203,13 +240,50 @@ const RecipeDetailsScreen = () => {
 
           <Text style={styles.section}>Личная заметка</Text>
           <TextInput
-            value={note}
-            onChangeText={(text) => setNote(recipe.id, text)}
+            value={noteText}
+            onChangeText={setNoteText}
             multiline
-            placeholder="Напиши заметку к этому рецепту..."
+            placeholder="Новая заметка к рецепту..."
             placeholderTextColor="#94a3b8"
             style={styles.noteInput}
           />
+          <Pressable
+            disabled={!noteText.trim()}
+            onPress={addNote}
+            style={[
+              styles.addNoteButton,
+              !noteText.trim() && styles.disabledPressable,
+            ]}
+          >
+            <Text
+              style={[
+                styles.addNoteText,
+                !noteText.trim() && styles.disabledPressableText,
+              ]}
+            >
+              Добавить заметку
+            </Text>
+          </Pressable>
+          <View style={styles.notesList}>
+            {recipeNotes.length ? (
+              recipeNotes.map((item) => (
+                <View key={item.id} style={styles.noteItem}>
+                  <View style={styles.noteContent}>
+                    <Text style={styles.noteText}>{item.text}</Text>
+                    <Text style={styles.noteDate}>{item.createdAt}</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => deleteNote(item.id)}
+                    style={styles.deleteNoteButton}
+                  >
+                    <Text style={styles.deleteNoteText}>Удалить</Text>
+                  </Pressable>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.muted}>Заметок пока нет.</Text>
+            )}
+          </View>
         </View>
         <View style={styles.actions}>
           <Pressable
@@ -348,6 +422,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     textAlignVertical: "top",
+  },
+  addNoteButton: {
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#20232A",
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  addNoteText: {
+    color: "#61DAFB",
+    fontWeight: "800",
+  },
+  notesList: {
+    gap: 10,
+    marginTop: 12,
+  },
+  noteItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 10,
+    backgroundColor: "#f8fafc",
+    padding: 10,
+  },
+  noteContent: {
+    flex: 1,
+  },
+  noteText: {
+    color: "#1e293b",
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  noteDate: {
+    color: "#94a3b8",
+    fontSize: 11,
+    marginTop: 5,
+  },
+  deleteNoteButton: {
+    borderRadius: 8,
+    backgroundColor: "#fee2e2",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  deleteNoteText: {
+    color: "#991b1b",
+    fontSize: 12,
+    fontWeight: "800",
   },
   textButton: {
     alignSelf: "flex-start",
