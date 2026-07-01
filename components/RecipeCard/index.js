@@ -22,10 +22,15 @@ const RecipeCard = ({ recipe, size = "large" }) => {
         />
       ) : (
         <View style={styles.imageFallback}>
+          <View style={styles.imageFallbackMark}>
+            <Text style={styles.imageFallbackMarkText}>
+              {recipe.category?.slice(0, 1) || "R"}
+            </Text>
+          </View>
           <Text style={styles.imageFallbackTitle} numberOfLines={1}>
             {recipe.name}
           </Text>
-          <Text style={styles.imageFallbackText}>Нет фото</Text>
+          <Text style={styles.imageFallbackText}>Фото загрузится при сети</Text>
         </View>
       )}
       <Pressable
@@ -78,8 +83,22 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#e0f2fe",
+    backgroundColor: "#dff3fb",
     padding: 12,
+  },
+  imageFallbackMark: {
+    width: 54,
+    height: 54,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 27,
+    backgroundColor: "#fff",
+    marginBottom: 12,
+  },
+  imageFallbackMarkText: {
+    color: "#1e6f8e",
+    fontSize: 22,
+    fontWeight: "900",
   },
   imageFallbackTitle: {
     color: "#075985",
@@ -89,9 +108,10 @@ const styles = StyleSheet.create({
   },
   imageFallbackText: {
     color: "#1e6f8e",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     marginTop: 6,
+    textAlign: "center",
   },
   favoriteButton: {
     position: "absolute",

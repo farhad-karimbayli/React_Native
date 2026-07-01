@@ -1,28 +1,30 @@
-const API_URLS = [
-  "https://www.themealdb.com/api/json/v1/1",
-  "https://themealdb.com/api/json/v1/1",
-];
+const API_URL = "https://www.themealdb.com/api/json/v1/1";
 
 const fetchMealDb = async (path) => {
-  let lastError;
+  const url = `${API_URL}/${path}`;
+  console.log("[MealDB] request", url);
 
-  for (const apiUrl of API_URLS) {
-    const url = `${apiUrl}/${path}`;
+  try {
+    const response = await fetch(url);
 
-    try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`MealDB request failed: ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      lastError = error;
+    if (!response.ok) {
+      throw new Error(`MealDB request failed: ${response.status}`);
     }
-  }
 
-  throw lastError;
+    const data = await response.json();
+    const count = Array.isArray(data.meals)
+      ? data.meals.length
+      : Array.isArray(data.categories)
+        ? data.categories.length
+        : 0;
+
+    console.log("[MealDB] response", path, "items:", count);
+
+    return data;
+  } catch (error) {
+    console.log("[MealDB] failed", url, error?.message || error);
+    throw error;
+  }
 };
 
 export const mapMeal = (meal, fallback = {}) => ({
